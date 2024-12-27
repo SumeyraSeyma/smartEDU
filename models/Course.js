@@ -27,6 +27,10 @@ const CourseSchema = new Schema({
     ref: "Category",
     required: [true, "Please provide a category"],
   },
+  user:{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+  }
 });
 
 CourseSchema.pre('validate', function(next){

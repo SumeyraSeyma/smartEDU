@@ -21,10 +21,17 @@ const userSchema = new Schema({
     default: "student",
     enum: ["student", "teacher", "admin"],
   },
+  courses:[
+    {
+      type:mongoose.Schema.Types.ObjectId,
+      ref:"Course"
+    }
+  ]
 });
 
 userSchema.pre("save", function (next) {
   const user = this;
+  if (!user.isModified('password')) { return next(); }
   bcrypt.hash(user.password, 10, (error, hash) => {
     user.password = hash;
     next();
