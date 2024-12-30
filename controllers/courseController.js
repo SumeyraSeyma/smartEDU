@@ -21,31 +21,33 @@ exports.createCourse = async (req, res) => {
 exports.getAllCourses = async (req, res) => {
   try {
     const categorySlug = req.query.categories;
-
-    const query =req.query.search
+    const query = req.query.search;
 
     const category = await Category.findOne({ slug: categorySlug });
 
     let filter = {};
     if (categorySlug) {
-      filter = { category: category._id };
+      filter.category = category._id;
     }
 
     if (query) {
-      filter = { name:query };
+      filter.name = query;
     }
 
-    if (!categorySlug && !query) {
-      filter.name = " ";
-      filter.category = null;
+    const queryConditions = [];
+
+    if (filter.name) {
+      queryConditions.push({ name: { $regex: '.*' + filter.name + '.*', $options: "i" } });
     }
 
-    const courses = await Course.find({
-      $or: [
-        { name: { $regex: '.*' + filter.name + '.*' , $options: "i" } },
-        { category: filter.category },
-      ],
-    }).sort({ createdAt: -1 }).populate("user");
+    if (filter.category) {
+      queryConditions.push({ category: filter.category });
+    }
+
+    const courses = await Course.find(queryConditions.length > 0 ? { $or: queryConditions } : {})
+      .sort({ createdAt: -1 })
+      .populate("user");
+
     const categories = await Category.find();
 
     res.status(200).render("courses", {
@@ -54,12 +56,14 @@ exports.getAllCourses = async (req, res) => {
       page_name: "courses",
     });
   } catch (error) {
+    console.log(error);
     res.status(400).json({
       status: "fail",
       error,
     });
   }
 };
+
 
 exports.getCourse = async (req, res) => {
   try {
@@ -111,4 +115,15 @@ exports.releaseCourse = async (req, res) => {
     });
   }
 };
+
+exports.deleteCourse = async (req, res) => {
+  try {
+    await Course.findOneAndDelete({ slug: req.params.slug });
+    req.flash("success", "Course deleted successfully.");
+    res.status(200).redirect("/dashboard");
+  } catch (error) {
+    req.flash("error", "Course could not be deleted.");
+    res.status(400).redirect("/dashboard");
+  }
+}
 
