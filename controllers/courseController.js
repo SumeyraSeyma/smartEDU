@@ -37,14 +37,18 @@ exports.getAllCourses = async (req, res) => {
     const queryConditions = [];
 
     if (filter.name) {
-      queryConditions.push({ name: { $regex: '.*' + filter.name + '.*', $options: "i" } });
+      queryConditions.push({
+        name: { $regex: ".*" + filter.name + ".*", $options: "i" },
+      });
     }
 
     if (filter.category) {
       queryConditions.push({ category: filter.category });
     }
 
-    const courses = await Course.find(queryConditions.length > 0 ? { $or: queryConditions } : {})
+    const courses = await Course.find(
+      queryConditions.length > 0 ? { $or: queryConditions } : {}
+    )
       .sort({ createdAt: -1 })
       .populate("user");
 
@@ -63,7 +67,6 @@ exports.getAllCourses = async (req, res) => {
     });
   }
 };
-
 
 exports.getCourse = async (req, res) => {
   try {
@@ -125,5 +128,20 @@ exports.deleteCourse = async (req, res) => {
     req.flash("error", "Course could not be deleted.");
     res.status(400).redirect("/dashboard");
   }
-}
+};
 
+exports.updateCourse = async (req, res) => {
+  try {
+    const course = await Course.findOne({ slug: req.params.slug });
+    course.name = req.body.name;
+    course.description = req.body.description;
+    course.category = req.body.category;
+    course.save();
+
+    req.flash("success", "Course updated successfully.");
+    res.status(200).redirect("/users/dashboard");
+  } catch (error) {
+    req.flash("error", "Course could not be updated.");
+    res.status(400).redirect("/courses");
+  }
+};
