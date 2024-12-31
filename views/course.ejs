@@ -17,7 +17,7 @@
 						</div>
 						<div class="post-content">
 
-							<% if(user && !(user.courses.includes(course._id))) { %>
+							<% if(user && user.role ==='student' && !(user.courses.includes(course._id))) { %>
 
 							<div class="post-date">
 								<form action="/courses/enroll" method="POST">
